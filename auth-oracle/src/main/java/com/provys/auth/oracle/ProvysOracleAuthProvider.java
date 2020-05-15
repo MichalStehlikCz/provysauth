@@ -57,16 +57,19 @@ public class ProvysOracleAuthProvider implements AuthenticationProvider {
           + "    WHERE\n"
           + "          (receiver_id=:c_User_ID)\n"
           + "    ;"
+          + "  :c_Token:=KER_User_PG.mf_CreateToken(SYSDATE+1);"
           + "END;")) {
         statement.registerOutParameter("c_User_ID", Types.NUMERIC);
         statement.registerOutParameter("c_ShortName_NM", Types.VARCHAR);
         statement.registerOutParameter("c_FullName", Types.VARCHAR);
+        statement.registerOutParameter("c_Token", Types.VARCHAR);
         statement.execute();
         LOG.debug("Verified user login via database (user {}, db {})", userName, provysDbUrl);
         var user = new ProvysUserData(
             DtUid.valueOf(statement.getBigDecimal("c_User_ID")),
             statement.getString("c_ShortName_NM"),
-            statement.getString("c_FullName"));
+            statement.getString("c_FullName"),
+            statement.getString("c_Token"));
         return new UsernamePasswordAuthenticationToken(user, password, USER_ROLES);
       }
     } catch (SQLException e) {

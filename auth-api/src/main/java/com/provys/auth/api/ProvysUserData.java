@@ -17,6 +17,7 @@ public final class ProvysUserData implements UserData {
   private final DtUid userId;
   private final String shortNameNm;
   private final String fullName;
+  private final String dbToken;
 
   /**
    * Create provys user data value object based on provided information.
@@ -25,10 +26,11 @@ public final class ProvysUserData implements UserData {
    * @param shortNameNm is short name (natural key of user account)
    * @param fullName is display name associated with logged in user
    */
-  public ProvysUserData(DtUid userId, String shortNameNm, String fullName) {
+  public ProvysUserData(DtUid userId, String shortNameNm, String fullName, String dbToken) {
     this.userId = userId;
     this.shortNameNm = shortNameNm;
     this.fullName = fullName;
+    this.dbToken = dbToken;
   }
 
   @Override
@@ -46,6 +48,11 @@ public final class ProvysUserData implements UserData {
     return fullName;
   }
 
+  @Override
+  public String getDbToken() {
+    return dbToken;
+  }
+
   @SuppressWarnings("SuspiciousGetterSetter") // needed to implement principal interface
   @Override
   public String getName() {
@@ -61,9 +68,10 @@ public final class ProvysUserData implements UserData {
       return false;
     }
     ProvysUserData that = (ProvysUserData) o;
-    return Objects.equals(userId, that.userId)
-        && Objects.equals(shortNameNm, that.shortNameNm)
-        && Objects.equals(fullName, that.fullName);
+    return userId.equals(that.userId)
+        && shortNameNm.equals(that.shortNameNm)
+        && fullName.equals(that.fullName)
+        && dbToken.equals(that.dbToken);
   }
 
   @Override
@@ -78,6 +86,7 @@ public final class ProvysUserData implements UserData {
         + "userId=" + userId
         + ", shortNameNm='" + shortNameNm + '\''
         + ", fullName='" + fullName + '\''
+        // dbToken is intentionally omitted, as it is secret
         + '}';
   }
 }

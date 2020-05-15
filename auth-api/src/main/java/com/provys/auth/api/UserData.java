@@ -29,4 +29,11 @@ public interface UserData extends Principal, Serializable {
    * @return value of field fullName
    */
   String getFullName();
+
+  /**
+   * Get database token, usable for login within this user context.
+   *
+   * @return database token, usable for login within this user context.
+   */
+  String getDbToken();
 }
