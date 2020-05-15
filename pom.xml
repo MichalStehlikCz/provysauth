@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.provys.parent</groupId>
@@ -11,12 +13,17 @@
   <name>Auth</name>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <modules>
+    <module>auth-api</module>
+    <module>oracle-auth</module>
+  </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <common.version>3.12.0</common.version>
   </properties>
   <scm>
-    <developerConnection>scm:git:https://github.com/MichalStehlikCz/provysauth.git</developerConnection>
+    <developerConnection>scm:git:https://github.com/MichalStehlikCz/provysauth.git
+    </developerConnection>
     <tag>HEAD</tag>
   </scm>
   <repositories>
@@ -38,6 +45,20 @@
       <url>https://maven.pkg.github.com/MichalStehlikCz/Maven</url>
     </repository>
   </distributionManagement>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.provys.common</groupId>
+        <artifactId>common-exception</artifactId>
+        <version>${common.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.provys.common</groupId>
+        <artifactId>common-datatype</artifactId>
+        <version>${common.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <build>
     <plugins>
       <plugin>
