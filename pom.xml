@@ -7,13 +7,13 @@
     <version>1.6.0</version>
   </parent>
   <groupId>com.provys.auth</groupId>
-  <artifactId>parent</artifactId>
+  <artifactId>auth-parent</artifactId>
   <name>Auth</name>
   <version>1.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
     <module>auth-api</module>
-    <module>oracle-auth</module>
+    <module>auth-oracle</module>
   </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
