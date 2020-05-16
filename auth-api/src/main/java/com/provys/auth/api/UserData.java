@@ -1,5 +1,6 @@
 package com.provys.auth.api;
 
+import com.google.errorprone.annotations.Immutable;
 import com.provys.common.datatype.DtUid;
 import java.io.Serializable;
 import java.security.Principal;
@@ -7,6 +8,7 @@ import java.security.Principal;
 /**
  * User data is data object that describes user context derived from authentication.
  */
+@Immutable
 public interface UserData extends Principal, Serializable {
 
   /**

@@ -2,7 +2,6 @@ package com.provys.auth.api;
 
 import com.google.errorprone.annotations.Immutable;
 import com.provys.common.datatype.DtUid;
-import java.util.Objects;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -10,7 +9,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * by service.
  */
 @Immutable
-public final class ProvysUserData implements UserData {
+final class ProvysUserData implements UserData {
 
   private static final long serialVersionUID = -8230441895302242132L;
 
@@ -25,8 +24,9 @@ public final class ProvysUserData implements UserData {
    * @param userId is Provys Uid of logged in user
    * @param shortNameNm is short name (natural key of user account)
    * @param fullName is display name associated with logged in user
+   * @param dbToken is token that can be used to switch database session to this user context
    */
-  public ProvysUserData(DtUid userId, String shortNameNm, String fullName, String dbToken) {
+  ProvysUserData(DtUid userId, String shortNameNm, String fullName, String dbToken) {
     this.userId = userId;
     this.shortNameNm = shortNameNm;
     this.fullName = fullName;

@@ -1,14 +1,18 @@
 package com.provys.auth.oracle;
 
-import com.provys.auth.api.ProvysUserData;
+import com.provys.auth.api.UserDataFactory;
 import com.provys.common.datatype.DtUid;
 import com.provys.common.exception.InternalException;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -27,8 +31,14 @@ public class ProvysOracleAuthProvider implements AuthenticationProvider {
 
   private final String provysDbUrl;
   private final OracleDataSource dataSource;
+  private final UserDataFactory userDataFactory;
+  private final long cacheTimeoutMs;
+  private final Map<String, CacheValue> cache = new ConcurrentHashMap<>(10);
 
-  ProvysOracleAuthProvider(@Value("${provysdb.url}") String provysDbUrl) {
+  @Autowired
+  ProvysOracleAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
+      @Value("${provysauth.cacheTimeout:900}") long cacheTimeoutSec,
+      UserDataFactory userDataFactory) {
     this.provysDbUrl = "jdbc:oracle:thin:@" + provysDbUrl;
     try {
       dataSource = new OracleDataSource();
@@ -36,41 +46,56 @@ public class ProvysOracleAuthProvider implements AuthenticationProvider {
     } catch (SQLException e) {
       throw new InternalException("Failed to initialize Oracle datasource", e);
     }
+    this.cacheTimeoutMs = 1000L * cacheTimeoutSec;
+    this.userDataFactory = userDataFactory;
   }
 
-  @Override
-  public Authentication authenticate(Authentication authentication) {
-    var token = (UsernamePasswordAuthenticationToken) authentication;
-    var userName = token.getName();
-    var password = (String) token.getCredentials();
+  /**
+   * Look-up cached value for given username / password combo.
+   *
+   * @param userName is user name being authenticated
+   * @param password is associated password being verified
+   * @return authentication token if successful, empty optional if not validated against cache
+   */
+  private Optional<Authentication> cacheLookup(String userName, String password) {
+    var value = cache.get(userName);
+    if (value == null) {
+      // no entry in cache
+      return Optional.empty();
+    }
+    if (!value.isValid()) {
+      // cache entry expired - we will clear the entry and return not found
+      cache.remove(userName);
+      return Optional.empty();
+    }
+    if (!value.passwordMatch(password)) {
+      // no password match - we will try regular authentication (password might have been changed)
+      return Optional.empty();
+    }
+    return Optional.of(value.authToken);
+  }
+
+  /**
+   * Validate username / password combo against database.
+   *
+   * @param userName is username to be used for connection
+   * @param password is password to be used for connection
+   * @return authentication token
+   * @throws BadCredentialsException if login fails using given username / password combination
+   * @throws InternalException       if connection to database fails for other reasons
+   */
+  private Authentication dbAuthenticate(String userName, String password) {
     try (var connection = dataSource.getConnection(userName, password)) {
-      try (var statement = connection.prepareCall("BEGIN\n"
-          + "  :c_User_ID:=KER_User_EP.mfw_GetUserID;\n"
-          + "  SELECT\n"
-          + "        usr.shortname_nm\n"
-          + "      , usr.fullname\n"
-          + "    INTO\n"
-          + "        :c_ShortName_NM"
-          + "      , :c_FullName\n"
-          + "    FROM\n"
-          + "        ker_receiver_tb receiver\n"
-          + "    WHERE\n"
-          + "          (receiver_id=:c_User_ID)\n"
-          + "    ;"
-          + "  :c_Token:=KER_User_PG.mf_CreateToken(SYSDATE+1);"
-          + "END;")) {
+      try (var statement = connection.prepareCall(
+          "BEGIN\n"
+              + "  :c_User_ID:=KER_User_EP.mfw_GetUserID;\n"
+              + "END;")) {
         statement.registerOutParameter("c_User_ID", Types.NUMERIC);
-        statement.registerOutParameter("c_ShortName_NM", Types.VARCHAR);
-        statement.registerOutParameter("c_FullName", Types.VARCHAR);
-        statement.registerOutParameter("c_Token", Types.VARCHAR);
         statement.execute();
         LOG.debug("Verified user login via database (user {}, db {})", userName, provysDbUrl);
-        var user = new ProvysUserData(
-            DtUid.valueOf(statement.getBigDecimal("c_User_ID")),
-            statement.getString("c_ShortName_NM"),
-            statement.getString("c_FullName"),
-            statement.getString("c_Token"));
-        return new UsernamePasswordAuthenticationToken(user, password, USER_ROLES);
+        return new UsernamePasswordAuthenticationToken(
+            userDataFactory.getUserData(DtUid.valueOf(statement.getBigDecimal("c_User_ID"))),
+            password, USER_ROLES);
       }
     } catch (SQLException e) {
       LOG.debug("User login via database failed (user {}, db {}): {}", userName, provysDbUrl, e);
@@ -79,9 +104,55 @@ public class ProvysOracleAuthProvider implements AuthenticationProvider {
     }
   }
 
+  private Authentication dbAuthenticateAndCache(String userName, String password) {
+    var result = dbAuthenticate(userName, password);
+    cache.put(userName,
+        new CacheValue(System.currentTimeMillis() + cacheTimeoutMs, password, result));
+    return result;
+  }
+
   @Override
-  public boolean supports(Class<?> aClass) {
-    return UsernamePasswordAuthenticationToken.class.isAssignableFrom(aClass);
+  public Authentication authenticate(Authentication authentication) {
+    var token = (UsernamePasswordAuthenticationToken) authentication;
+    var userName = token.getName();
+    var password = (String) token.getCredentials();
+    return cacheLookup(userName, password)
+        .orElseGet(() -> dbAuthenticateAndCache(userName, password));
+  }
+
+  @Override
+  public boolean supports(Class<?> clazz) {
+    return UsernamePasswordAuthenticationToken.class.isAssignableFrom(clazz);
+  }
+
+  private static final class CacheValue {
+
+    private final long validUntil;
+    private final String password;
+    private final Authentication authToken;
+
+    CacheValue(long validUntil, String password, Authentication authToken) {
+      this.validUntil = validUntil;
+      this.password = password;
+      this.authToken = authToken;
+    }
+
+    boolean isValid() {
+      return validUntil > System.currentTimeMillis();
+    }
+
+    boolean passwordMatch(String checkPassword) {
+      return password.equals(checkPassword);
+    }
+
+    @Override
+    public String toString() {
+      return "CacheValue{"
+          + "validUntil=" + validUntil
+          // password is intentionally omitted
+          + "authToken='" + authToken + '\''
+          + '}';
+    }
   }
 
   @Override
