@@ -9,7 +9,7 @@
   <groupId>com.provys.auth</groupId>
   <artifactId>auth-parent</artifactId>
   <name>Auth</name>
-  <version>1.2.0</version>
+  <version>1.2.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <modules>
     <module>auth-api</module>
@@ -22,7 +22,7 @@
   <scm>
     <developerConnection>scm:git:https://github.com/MichalStehlikCz/provysauth.git
     </developerConnection>
-    <tag>v1.2.0</tag>
+    <tag>HEAD</tag>
   </scm>
   <repositories>
     <repository>
