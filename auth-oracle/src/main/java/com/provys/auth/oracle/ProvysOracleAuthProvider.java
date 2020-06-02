@@ -86,17 +86,10 @@ public class ProvysOracleAuthProvider implements AuthenticationProvider {
    */
   private Authentication dbAuthenticate(String userName, String password) {
     try (var connection = dataSource.getConnection(userName, password)) {
-      try (var statement = connection.prepareCall(
-          "BEGIN\n"
-              + "  :c_User_ID:=KER_User_EP.mfw_GetUserID;\n"
-              + "END;")) {
-        statement.registerOutParameter("c_User_ID", Types.NUMERIC);
-        statement.execute();
-        LOG.debug("Verified user login via database (user {}, db {})", userName, provysDbUrl);
-        return new UsernamePasswordAuthenticationToken(
-            userDataFactory.getUserData(DtUid.valueOf(statement.getBigDecimal("c_User_ID"))),
-            password, USER_ROLES);
-      }
+      LOG.debug("Verified user login via database (user {}, db {})", userName, provysDbUrl);
+      return new UsernamePasswordAuthenticationToken(
+          userDataFactory.getUserData(connection),
+          password, USER_ROLES);
     } catch (SQLException e) {
       LOG.debug("User login via database failed (user {}, db {}): {}", userName, provysDbUrl, e);
       throw new BadCredentialsException("Invalid username or password " + e.getErrorCode()

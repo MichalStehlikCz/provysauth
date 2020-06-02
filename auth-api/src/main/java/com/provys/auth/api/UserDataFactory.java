@@ -3,6 +3,7 @@ package com.provys.auth.api;
 import com.provys.common.datatype.DtUid;
 import com.provys.common.exception.InternalException;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
 import oracle.jdbc.pool.OracleDataSource;
@@ -26,6 +27,16 @@ public final class UserDataFactory {
   private final String provysDbPwd;
   private final OracleDataSource dataSource;
 
+  /**
+   * Constructor creates user data factory that will read data about user from database. Does not
+   * use provysdb for database access because provysdb depends on auth and not the other way around,
+   * even though it means that database calls are not logged when using logging on DbConnection
+   * level.
+   *
+   * @param provysDbUrl is jdbc thin url of provys database
+   * @param provysDbUser is technical account, used to connect to database
+   * @param provysDbPwd is password for technical account, used to connect to database
+   */
   @Autowired
   public UserDataFactory(@Value("${provysdb.url}") String provysDbUrl,
       @Value("${provysdb.user}") String provysDbUser,
@@ -41,42 +52,77 @@ public final class UserDataFactory {
     }
   }
 
+  /**
+   * Retrieve user data object from supplied connection.
+   *
+   * @param connection is connection user data should be read from
+   * @return user data read from connection
+   */
+  public UserData getUserData(Connection connection) {
+    try (var statement = connection.prepareCall(
+        "DECLARE\n"
+            + "  l_User_ID NUMBER;\n"
+            + "  l_ShortName_NM VARCHAR(32767);\n"
+            + "  l_FullName VARCHAR(32767);\n"
+            + "  l_Token VARCHAR2(32767);\n"
+            + "BEGIN\n"
+            + "  l_User_ID:=KER_User_EP.mf_GetUserID;\n"
+            + "  SELECT\n"
+            + "        usr.shortname_nm\n"
+            + "      , usr.fullname\n"
+            + "    INTO\n"
+            + "        l_ShortName_NM"
+            + "      , l_FullName\n"
+            + "    FROM\n"
+            + "        kec_user_vw usr\n"
+            + "    WHERE\n"
+            + "          (usr.user_id=l_User_ID)\n"
+            + "    ;\n"
+            + "  l_Token:=KER_User_PG.mf_CreateToken(SYSDATE+1/24);\n"
+            + "  ?:=l_User_ID;\n"
+            + "  ?:=l_ShortName_NM;\n"
+            + "  ?:=l_FullName;\n"
+            + "  ?:=l_Token;\n"
+            + "END;")) {
+      statement.registerOutParameter(1, Types.NUMERIC);
+      statement.registerOutParameter(2, Types.VARCHAR);
+      statement.registerOutParameter(3, Types.VARCHAR);
+      statement.registerOutParameter(4, Types.VARCHAR);
+      statement.execute();
+      return new ProvysUserData(
+          DtUid.valueOf(statement.getBigDecimal(1)),
+          statement.getString(2),
+          statement.getString(3),
+          statement.getString(4));
+    } catch (SQLException e) {
+      LOG.warn("Property retrieval from database failed (user {}, db {}): {}",
+          provysDbUser, provysDbUrl, e);
+      throw new InternalException("Property retrieval from database failed" + e.getErrorCode()
+          + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Retrieve user data for specified user. Technical user must be able to impersonate this user in
+   * order for function to work.
+   *
+   * @param userId is Id of user whose data we want to read
+   * @return user data record for given user
+   */
   public UserData getUserData(DtUid userId) {
     try (var connection = dataSource.getConnection(provysDbUser, provysDbPwd)) {
       try (var statement = connection.prepareCall(
           "DECLARE\n"
               + "  l_User_ID NUMBER :=?;\n"
-              + "  l_ShortName_NM VARCHAR(32767);\n"
-              + "  l_FullName VARCHAR(32767);\n"
-              + "  l_Token VARCHAR2(32767);\n"
               + "BEGIN\n"
-              + "  KER_User_PG.mp_SetUserID;\n"
-              + "  SELECT\n"
-              + "        usr.shortname_nm\n"
-              + "      , usr.fullname\n"
-              + "    INTO\n"
-              + "        l_ShortName_NM"
-              + "      , l_FullName\n"
-              + "    FROM\n"
-              + "        ker_receiver_tb usr\n"
-              + "    WHERE\n"
-              + "          (usr.receiver_id=l_User_ID)\n"
-              + "    ;\n"
-              + "  l_Token:=KER_User_PG.mf_CreateToken(SYSDATE+1/24);\n"
-              + "  ?:=l_ShortName_NM;\n"
-              + "  ?:=l_FullName;\n"
-              + "  ?:=l_Token;\n"
+              + "  KER_User_PG.mp_SetUserID(\n"
+              + "        p_User_ID => l_User_ID\n"
+              + "      , p_TestRights => FALSE\n"
+              + "    );\n"
               + "END;")) {
         statement.setBigDecimal(1, new BigDecimal(userId.getValue()));
-        statement.registerOutParameter(2, Types.VARCHAR);
-        statement.registerOutParameter(3, Types.VARCHAR);
-        statement.registerOutParameter(4, Types.VARCHAR);
         statement.execute();
-        return new ProvysUserData(
-            userId,
-            statement.getString(2),
-            statement.getString(3),
-            statement.getString(4));
+        return getUserData(connection);
       }
     } catch (SQLException e) {
       LOG.warn("Property retrieval from database failed (userId {}, user {}, db {}): {}",
