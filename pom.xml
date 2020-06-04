@@ -17,7 +17,7 @@
   </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <common.version>3.16.0</common.version>
+    <common.version>3.16.2</common.version>
   </properties>
   <scm>
     <developerConnection>scm:git:https://github.com/MichalStehlikCz/provysauth.git
