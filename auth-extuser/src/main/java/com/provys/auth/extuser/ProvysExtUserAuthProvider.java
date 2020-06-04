@@ -57,9 +57,9 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
   private static String createHash(String userName, String password) {
     MessageDigest messageDigest;
     try {
-      messageDigest = MessageDigest.getInstance("SHA512");
+      messageDigest = MessageDigest.getInstance("SHA-512");
     } catch (NoSuchAlgorithmException e) {
-      throw new InternalException("Algorithm SHA512 not found for password hashing", e);
+      throw new InternalException("Algorithm SHA-512 not found for password hashing", e);
     }
     return Base64.getEncoder()
         .encodeToString(
