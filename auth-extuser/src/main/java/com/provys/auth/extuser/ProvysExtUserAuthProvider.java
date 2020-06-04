@@ -90,6 +90,7 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
               + "END;")) {
         preparedCall.setString(1, userName.trim());
         preparedCall.setString(2, createHash(userName, password));
+        preparedCall.execute();
       }
       LOG.debug("Verified user login via extuser (user {}, db {}, dbUser {})", userName,
           provysDbUrl, provysDbUser);
