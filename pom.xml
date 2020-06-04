@@ -17,7 +17,7 @@
   </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <common.version>3.12.0</common.version>
+    <common.version>3.16.0</common.version>
   </properties>
   <scm>
     <developerConnection>scm:git:https://github.com/MichalStehlikCz/provysauth.git
@@ -53,6 +53,11 @@
       <dependency>
         <groupId>com.provys.common</groupId>
         <artifactId>common-datatype</artifactId>
+        <version>${common.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.provys.common</groupId>
+        <artifactId>common-crypt</artifactId>
         <version>${common.version}</version>
       </dependency>
     </dependencies>

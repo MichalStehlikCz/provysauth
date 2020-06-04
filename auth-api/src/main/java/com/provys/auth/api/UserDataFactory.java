@@ -1,5 +1,6 @@
 package com.provys.auth.api;
 
+import com.provys.common.crypt.DtEncryptedString;
 import com.provys.common.datatype.DtUid;
 import com.provys.common.exception.InternalException;
 import java.math.BigDecimal;
@@ -78,7 +79,7 @@ public final class UserDataFactory {
             + "    WHERE\n"
             + "          (usr.user_id=l_User_ID)\n"
             + "    ;\n"
-            + "  l_Token:=KER_User_PG.mf_CreateToken(SYSDATE+1/24);\n"
+            + "  l_Token:=KEC_User_CP.mf_CreateIISToken;\n"
             + "  ?:=l_User_ID;\n"
             + "  ?:=l_ShortName_NM;\n"
             + "  ?:=l_FullName;\n"
@@ -93,7 +94,7 @@ public final class UserDataFactory {
           DtUid.valueOf(statement.getBigDecimal(1)),
           statement.getString(2),
           statement.getString(3),
-          statement.getString(4));
+          DtEncryptedString.valueOf(statement.getString(4)));
     } catch (SQLException e) {
       LOG.warn("Property retrieval from database failed (user {}, db {}): {}",
           provysDbUser, provysDbUrl, e);

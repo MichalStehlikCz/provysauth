@@ -1,6 +1,7 @@
 package com.provys.auth.api;
 
 import com.google.errorprone.annotations.Immutable;
+import com.provys.common.crypt.DtEncryptedString;
 import com.provys.common.datatype.DtUid;
 import java.io.Serializable;
 import java.security.Principal;
@@ -37,5 +38,5 @@ public interface UserData extends Principal, Serializable {
    *
    * @return database token, usable for login within this user context.
    */
-  String getDbToken();
+  DtEncryptedString getDbToken();
 }

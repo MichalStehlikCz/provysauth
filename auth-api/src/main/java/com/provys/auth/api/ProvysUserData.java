@@ -1,6 +1,7 @@
 package com.provys.auth.api;
 
 import com.google.errorprone.annotations.Immutable;
+import com.provys.common.crypt.DtEncryptedString;
 import com.provys.common.datatype.DtUid;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -16,7 +17,7 @@ final class ProvysUserData implements UserData {
   private final DtUid userId;
   private final String shortNameNm;
   private final String fullName;
-  private final String dbToken;
+  private final DtEncryptedString dbToken;
 
   /**
    * Create provys user data value object based on provided information.
@@ -26,7 +27,7 @@ final class ProvysUserData implements UserData {
    * @param fullName is display name associated with logged in user
    * @param dbToken is token that can be used to switch database session to this user context
    */
-  ProvysUserData(DtUid userId, String shortNameNm, String fullName, String dbToken) {
+  ProvysUserData(DtUid userId, String shortNameNm, String fullName, DtEncryptedString dbToken) {
     this.userId = userId;
     this.shortNameNm = shortNameNm;
     this.fullName = fullName;
@@ -49,7 +50,7 @@ final class ProvysUserData implements UserData {
   }
 
   @Override
-  public String getDbToken() {
+  public DtEncryptedString getDbToken() {
     return dbToken;
   }
 
