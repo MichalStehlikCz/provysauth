@@ -3,7 +3,7 @@
   <parent>
     <artifactId>auth-parent</artifactId>
     <groupId>com.provys.auth</groupId>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.1.2</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>auth-api</artifactId>
