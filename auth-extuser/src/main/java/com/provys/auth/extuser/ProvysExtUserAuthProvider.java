@@ -37,8 +37,8 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
 
   @Autowired
   ProvysExtUserAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
-      @Value("${provysdb.url}") String provysDbUser,
-      @Value("${provysdb.url}") String provysDbPwd,
+      @Value("${provysdb.user}") String provysDbUser,
+      @Value("${provysdb.pwd}") String provysDbPwd,
       @Value("${provysauth.cacheTimeout:900}") long cacheTimeoutSec,
       UserDataFactory userDataFactory) {
     super(cacheTimeoutSec);
@@ -98,7 +98,7 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
           password, USER_ROLES);
     } catch (SQLException e) {
       LOG.debug("User login via ExtUser failed (user {}, db {}, dbUser {}): {}", userName,
-          provysDbUrl, provysDbPwd, e);
+          provysDbUrl, provysDbUser, e);
       throw new BadCredentialsException("Invalid username or password " + e.getErrorCode()
           + e.getMessage(), e);
     }
