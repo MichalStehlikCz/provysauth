@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
@@ -63,7 +64,8 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
     }
     return Base64.getEncoder()
         .encodeToString(
-            messageDigest.digest((password + userName).getBytes(StandardCharsets.UTF_8)));
+            messageDigest.digest((password.trim() + userName.trim().toUpperCase(Locale.ENGLISH))
+                .getBytes(StandardCharsets.UTF_8)));
   }
 
   /**
@@ -88,7 +90,7 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
               + "      , p_Password => l_Password\n"
               + "    );\n"
               + "END;")) {
-        preparedCall.setString(1, userName.trim());
+        preparedCall.setString(1, userName.trim().toUpperCase(Locale.ENGLISH));
         preparedCall.setString(2, createHash(userName, password));
         preparedCall.execute();
       }
