@@ -1,10 +1,15 @@
-package com.provys.auth.oracle;
+package com.provys.auth.extuser;
 
 import com.provys.auth.api.ProvysUsernamePasswordAuthProvider;
 import com.provys.auth.api.UserDataFactory;
 import com.provys.common.exception.InternalException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,22 +23,28 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider {
+public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvider {
 
-  private static final Logger LOG = LogManager.getLogger(ProvysOracleAuthProvider.class);
+  private static final Logger LOG = LogManager.getLogger(ProvysExtUserAuthProvider.class);
   private static final List<GrantedAuthority> USER_ROLES = AuthorityUtils
       .createAuthorityList("ROLE_USER");
 
   private final String provysDbUrl;
+  private final String provysDbUser;
+  private final String provysDbPwd;
   private final OracleDataSource dataSource;
   private final UserDataFactory userDataFactory;
 
   @Autowired
-  ProvysOracleAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
+  ProvysExtUserAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
+      @Value("${provysdb.url}") String provysDbUser,
+      @Value("${provysdb.url}") String provysDbPwd,
       @Value("${provysauth.cacheTimeout:900}") long cacheTimeoutSec,
       UserDataFactory userDataFactory) {
     super(cacheTimeoutSec);
-    this.provysDbUrl = "jdbc:oracle:thin:@" + provysDbUrl;
+    this.provysDbUrl = "jdbc:oracle:thin:@" + Objects.requireNonNull(provysDbUrl);
+    this.provysDbUser = Objects.requireNonNull(provysDbUser);
+    this.provysDbPwd = Objects.requireNonNull(provysDbPwd);
     try {
       dataSource = new OracleDataSource();
       dataSource.setURL(this.provysDbUrl);
@@ -41,6 +52,18 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
       throw new InternalException("Failed to initialize Oracle datasource", e);
     }
     this.userDataFactory = userDataFactory;
+  }
+
+  private static String createHash(String userName, String password) {
+    MessageDigest messageDigest;
+    try {
+      messageDigest = MessageDigest.getInstance("SHA512");
+    } catch (NoSuchAlgorithmException e) {
+      throw new InternalException("Algorithm SHA512 not found for password hashing", e);
+    }
+    return Base64.getEncoder()
+        .encodeToString(
+            messageDigest.digest((password + userName).getBytes(StandardCharsets.UTF_8)));
   }
 
   /**
@@ -54,13 +77,28 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
    */
   @Override
   protected Authentication authenticate(String userName, String password) {
-    try (var connection = dataSource.getConnection(userName, password)) {
-      LOG.debug("Verified user login via database (user {}, db {})", userName, provysDbUrl);
+    try (var connection = dataSource.getConnection(provysDbUser, provysDbPwd)) {
+      try (var preparedCall = connection.prepareCall(
+          "DECLARE\n"
+              + "  l_ShortName_NM VARCHAR2(200) :=?;"
+              + "  l_Password VARCHAR2(200) :=?;"
+              + "BEGIN\n"
+              + "  KEC_User_CP.mp_SetExtUserID_Password(\n"
+              + "        p_User_NM => l_ShortName_NM\n"
+              + "      , p_Password => l_Password\n"
+              + "    );\n"
+              + "END;")) {
+        preparedCall.setString(1, userName.trim());
+        preparedCall.setString(2, createHash(userName, password));
+      }
+      LOG.debug("Verified user login via extuser (user {}, db {}, dbUser {})", userName,
+          provysDbUrl, provysDbUser);
       return new UsernamePasswordAuthenticationToken(
           userDataFactory.getUserData(connection),
           password, USER_ROLES);
     } catch (SQLException e) {
-      LOG.debug("User login via database failed (user {}, db {}): {}", userName, provysDbUrl, e);
+      LOG.debug("User login via ExtUser failed (user {}, db {}, dbUser {}): {}", userName,
+          provysDbUrl, provysDbPwd, e);
       throw new BadCredentialsException("Invalid username or password " + e.getErrorCode()
           + e.getMessage(), e);
     }
@@ -68,8 +106,9 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
 
   @Override
   public String toString() {
-    return "ProvysOracleAuthProvider{"
+    return "ProvysExtUserAuthProvider{"
         + "provysDbUrl='" + provysDbUrl + '\''
-        + '}';
+        + ", provysDbUser='" + provysDbUser + '\''
+        + ", " + super.toString() + '}';
   }
 }

@@ -14,6 +14,7 @@
   <modules>
     <module>auth-api</module>
     <module>auth-oracle</module>
+    <module>auth-extuser</module>
   </modules>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
