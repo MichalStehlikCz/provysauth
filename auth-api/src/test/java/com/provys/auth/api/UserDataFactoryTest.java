@@ -18,7 +18,7 @@ class UserDataFactoryTest {
 
   @Test
   void getUserDataConnectionTest() throws SQLException {
-    var factory = new UserDataFactory(
+    var factory = new UserDataFactoryImpl(
         "localhost:1000:PVYS", "test", "test");
     var connection = mock(Connection.class);
     var preparedCall = mock(CallableStatement.class);

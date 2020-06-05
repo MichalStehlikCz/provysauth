@@ -98,7 +98,7 @@ public abstract class ProvysUsernamePasswordAuthProvider implements Authenticati
    * @param password is password used for login
    * @return authentication token if successful
    */
-  protected abstract Authentication authenticate(String userName, String password);
+  protected abstract Authentication doAuthenticate(String userName, String password);
 
   /**
    * Do actual authentication and cache result.
@@ -107,8 +107,8 @@ public abstract class ProvysUsernamePasswordAuthProvider implements Authenticati
    * @param password is password used for login
    * @return authentication token if successful
    */
-  protected Authentication authenticateAndCache(String userName, String password) {
-    var result = authenticate(userName, password);
+  protected Authentication doAuthenticateAndCache(String userName, String password) {
+    var result = doAuthenticate(userName, password);
     cache(userName, password, result);
     return result;
   }
@@ -119,7 +119,7 @@ public abstract class ProvysUsernamePasswordAuthProvider implements Authenticati
     var userName = token.getName();
     var password = (String) token.getCredentials();
     return cacheLookup(userName, password)
-        .orElseGet(() -> authenticateAndCache(userName, password));
+        .orElseGet(() -> doAuthenticateAndCache(userName, password));
   }
 
   @Override

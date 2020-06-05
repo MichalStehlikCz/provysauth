@@ -5,6 +5,8 @@ import com.provys.auth.api.UserDataFactory;
 import com.provys.common.exception.InternalException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Objects;
+import javax.sql.DataSource;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +19,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Component;
 
+/**
+ * Authentication provider that authenticates username + password pair by connecting to Oracle
+ * database using these credentials. Caches result for defined period of time to speed up repeated
+ * authentication using the same credentials.
+ */
 @Component
 public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider {
 
@@ -25,7 +32,7 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
       .createAuthorityList("ROLE_USER");
 
   private final String provysDbUrl;
-  private final OracleDataSource dataSource;
+  private final DataSource dataSource;
   private final UserDataFactory userDataFactory;
 
   @Autowired
@@ -33,14 +40,22 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
       @Value("${provysauth.cacheTimeout:900}") long cacheTimeoutSec,
       UserDataFactory userDataFactory) {
     super(cacheTimeoutSec);
-    this.provysDbUrl = "jdbc:oracle:thin:@" + provysDbUrl;
+    this.provysDbUrl = "jdbc:oracle:thin:@" + Objects.requireNonNull(provysDbUrl);
     try {
       dataSource = new OracleDataSource();
-      dataSource.setURL(this.provysDbUrl);
+      ((OracleDataSource) dataSource).setURL(this.provysDbUrl);
     } catch (SQLException e) {
       throw new InternalException("Failed to initialize Oracle datasource", e);
     }
-    this.userDataFactory = userDataFactory;
+    this.userDataFactory = Objects.requireNonNull(userDataFactory);
+  }
+
+  ProvysOracleAuthProvider(String provysDbUrl, DataSource dataSource, long cacheTimeoutSec,
+      UserDataFactory userDataFactory) {
+    super(cacheTimeoutSec);
+    this.provysDbUrl = "jdbc:oracle:thin:@" + Objects.requireNonNull(provysDbUrl);
+    this.dataSource = Objects.requireNonNull(dataSource);
+    this.userDataFactory = Objects.requireNonNull(userDataFactory);
   }
 
   /**
@@ -53,7 +68,7 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
    * @throws InternalException       if connection to database fails for other reasons
    */
   @Override
-  protected Authentication authenticate(String userName, String password) {
+  protected Authentication doAuthenticate(String userName, String password) {
     try (var connection = dataSource.getConnection(userName, password)) {
       LOG.debug("Verified user login via database (user {}, db {})", userName, provysDbUrl);
       return new UsernamePasswordAuthenticationToken(
