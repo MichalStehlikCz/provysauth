@@ -45,7 +45,7 @@ public class AuthProviderLookup {
           .getBean(authProviderDef.getBeanName(), AuthenticationProvider.class);
     } catch (BeansException e) {
       throw new InternalException("Authentication provider bean retrieval failed for name "
-          + upperName + ", bean name " + authProviderDef.getBeanName(), e);
+          + authProviderDef.name() + ", bean name " + authProviderDef.getBeanName(), e);
     }
   }
 
