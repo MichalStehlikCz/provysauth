@@ -16,7 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
- * Factory that create UserData based on supplied Id. Uses database look-up
+ * Factory that create UserData based on supplied Id. Uses database look-up to retrieve missing
+ * information.
  */
 @Component
 public final class UserDataFactoryImpl implements UserDataFactory {
@@ -54,6 +55,12 @@ public final class UserDataFactoryImpl implements UserDataFactory {
   }
 
   @Override
+  public UserData getUserData(DtUid userId, String shortNameNm, String fullName,
+      DtEncryptedString dbToken) {
+    return new ProvysUserData(userId, shortNameNm, fullName, dbToken);
+  }
+
+  @Override
   public UserData getUserData(Connection connection) {
     try (var statement = connection.prepareCall(
         "DECLARE\n"
@@ -85,7 +92,7 @@ public final class UserDataFactoryImpl implements UserDataFactory {
       statement.registerOutParameter(3, Types.VARCHAR);
       statement.registerOutParameter(4, Types.VARCHAR);
       statement.execute();
-      return new ProvysUserData(
+      return getUserData(
           DtUid.valueOf(statement.getBigDecimal(1)),
           statement.getString(2),
           statement.getString(3),

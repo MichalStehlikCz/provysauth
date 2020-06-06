@@ -2,8 +2,11 @@ package com.provys.auth.none;
 
 import com.provys.auth.api.UserData;
 import com.provys.auth.api.UserDataFactory;
+import com.provys.common.crypt.DtEncryptedString;
+import com.provys.common.datatype.DtUid;
 import com.provys.common.exception.InternalException;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 import java.util.Objects;
 import oracle.jdbc.pool.OracleDataSource;
@@ -106,9 +109,45 @@ public class ProvysNoneAuthProvider implements AuthenticationProvider {
       var dataSource = new OracleDataSource();
       dataSource.setURL(provysDbUrl);
       try (var connection = dataSource.getConnection(provysDbUser, provysDbPwd)) {
-        authenticationResult = new NoneAuthenticationToken(userDataFactory.getUserData(connection));
-        LOG.debug("Initialized authentication result of none auth provider using db {}, user {}",
-            provysDbUrl, provysDbUser);
+        try (var statement = connection.prepareCall(
+            "DECLARE\n"
+                + "  l_User_ID NUMBER;\n"
+                + "  l_ShortName_NM VARCHAR(32767);\n"
+                + "  l_FullName VARCHAR(32767);\n"
+                + "BEGIN\n"
+                + "  l_User_ID:=KER_User_EP.mf_GetUserID;\n"
+                + "  SELECT\n"
+                + "        usr.shortname_nm\n"
+                + "      , usr.fullname\n"
+                + "    INTO\n"
+                + "        l_ShortName_NM"
+                + "      , l_FullName\n"
+                + "    FROM\n"
+                + "        kec_user_vw usr\n"
+                + "    WHERE\n"
+                + "          (usr.user_id=l_User_ID)\n"
+                + "    ;\n"
+                + "  ?:=l_User_ID;\n"
+                + "  ?:=l_ShortName_NM;\n"
+                + "  ?:=l_FullName;\n"
+                + "END;")) {
+          statement.registerOutParameter(1, Types.NUMERIC);
+          statement.registerOutParameter(2, Types.VARCHAR);
+          statement.registerOutParameter(3, Types.VARCHAR);
+          statement.execute();
+          authenticationResult = new NoneAuthenticationToken(userDataFactory.getUserData(
+              DtUid.valueOf(statement.getBigDecimal(1)),
+              statement.getString(2),
+              statement.getString(3),
+              DtEncryptedString.valueOf("GENERIC")));
+          LOG.debug("Initialized authentication result of none auth provider using db {}, user {}",
+              provysDbUrl, provysDbUser);
+        } catch (SQLException e) {
+          LOG.warn("Property retrieval from database failed (user {}, db {}): {}",
+              provysDbUser, provysDbUrl, e);
+          throw new InternalException("Property retrieval from database failed" + e.getErrorCode()
+              + e.getMessage(), e);
+        }
       }
     } catch (SQLException e) {
       throw new InternalException("Failed to initialize Oracle datasource", e);
