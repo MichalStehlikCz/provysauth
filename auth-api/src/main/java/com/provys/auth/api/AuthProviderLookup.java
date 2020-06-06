@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 /**
  * Class allows lookup of authentication provider bean by name.
  *
- * Note that it does not register authentication providers - appropriate libraries must be included
- * by application using this look-up, otherwise lookup will fail with message that bean has not been
- * found.
+ * <p>Note that it does not register authentication providers - appropriate libraries must be
+ * included by application using this look-up, otherwise lookup will fail with message that bean has
+ * not been found.
  */
 @Component
 public class AuthProviderLookup {
