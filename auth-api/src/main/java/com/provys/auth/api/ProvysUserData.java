@@ -10,9 +10,23 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * by service.
  */
 @Immutable
-final class ProvysUserData implements UserData {
+public final class ProvysUserData implements UserData {
 
   private static final long serialVersionUID = -8230441895302242132L;
+
+  /**
+   * Get new instance of Provys user data.
+   *
+   * @param userId is Provys Uid of user
+   * @param shortNameNm is short name
+   * @param fullName is full (display) name
+   * @param dbToken is database token that will be used to access Provys database
+   * @return new instance of ProvysUserData
+   */
+  public static ProvysUserData of(DtUid userId, String shortNameNm, String fullName,
+      DtEncryptedString dbToken) {
+    return new ProvysUserData(userId, shortNameNm, fullName, dbToken);
+  }
 
   private final DtUid userId;
   private final String shortNameNm;

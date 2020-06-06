@@ -1,0 +1,4 @@
+provysdb:
+  url: testurl
+  user: testuser
+  pwd: testpwd
