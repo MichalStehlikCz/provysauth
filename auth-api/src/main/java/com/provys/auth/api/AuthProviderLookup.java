@@ -15,6 +15,11 @@ import org.springframework.stereotype.Component;
  * <p>Note that it does not register authentication providers - appropriate libraries must be
  * included by application using this look-up, otherwise lookup will fail with message that bean has
  * not been found.
+ *
+ * <p>Special case is mock authentication provider. Mock provider is not registered as bean by
+ * auth-mock module, instead, you have to register it under name mockAuthProvider. Moreover
+ * {@code AuthProviderLookup} allows use of authentication provider name in the form
+ * {@code MOCK$<i>} that will invoke bean, registered as {@code mockAuthProvider<i>}.
  */
 @Component
 public class AuthProviderLookup {
@@ -34,6 +39,11 @@ public class AuthProviderLookup {
    */
   public AuthenticationProvider getAuthProvider(String name) {
     var upperName = name.toUpperCase(Locale.ENGLISH);
+    if (upperName.startsWith("MOCK$")) {
+      return applicationContext
+          .getBean(AuthProviders.MOCK.getBeanName() + upperName.substring(5),
+              AuthenticationProvider.class);
+    }
     AuthProviders authProviderDef;
     try {
       authProviderDef = AuthProviders.valueOf(upperName);
