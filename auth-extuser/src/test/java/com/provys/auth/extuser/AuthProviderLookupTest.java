@@ -21,6 +21,6 @@ public class AuthProviderLookupTest {
   @Test
   void getAuthProviderTest() {
     assertThat(authProviderLookup.getAuthProvider("EXTUSER"))
-        .isInstanceOf(ProvysExtUserAuthProvider.class);
+        .isInstanceOf(ExtUserAuthProvider.class);
   }
 }

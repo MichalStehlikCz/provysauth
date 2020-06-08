@@ -21,6 +21,6 @@ public class AuthProviderLookupTest {
   @Test
   void getAuthProviderTest() {
     assertThat(authProviderLookup.getAuthProvider("NONE"))
-        .isInstanceOf(ProvysNoneAuthProvider.class);
+        .isInstanceOf(NoneAuthProvider.class);
   }
 }

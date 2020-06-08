@@ -18,7 +18,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
  * as component, instead, user is responsible to set up bean via factory, that will define these
  * answers
  */
-public final class ProvysMockAuthProvider implements AuthenticationProvider {
+public final class MockAuthProvider implements AuthenticationProvider {
 
   private static final List<GrantedAuthority> USER_ROLES = AuthorityUtils
       .createAuthorityList("ROLE_USER");
@@ -31,7 +31,7 @@ public final class ProvysMockAuthProvider implements AuthenticationProvider {
    *
    * @param userData is map of credentials and corresponding user data items
    */
-  public ProvysMockAuthProvider(Map<UsernamePasswordPair, UserData> userData) {
+  public MockAuthProvider(Map<UsernamePasswordPair, UserData> userData) {
     this.authentications = userData.entrySet().stream()
         .map(entry -> Map.entry(entry.getKey(),
             new UsernamePasswordAuthenticationToken(

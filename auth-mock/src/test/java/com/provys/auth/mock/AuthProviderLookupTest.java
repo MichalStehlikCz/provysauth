@@ -21,6 +21,6 @@ public class AuthProviderLookupTest {
   @Test
   void getAuthProviderTest() {
     assertThat(authProviderLookup.getAuthProvider("MOCK"))
-        .isInstanceOf(ProvysMockAuthProvider.class);
+        .isInstanceOf(MockAuthProvider.class);
   }
 }

@@ -31,9 +31,9 @@ import org.springframework.stereotype.Component;
  * speed up repeated authentication using the same credentials.
  */
 @Component
-public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvider {
+public class ExtUserAuthProvider extends ProvysUsernamePasswordAuthProvider {
 
-  private static final Logger LOG = LogManager.getLogger(ProvysExtUserAuthProvider.class);
+  private static final Logger LOG = LogManager.getLogger(ExtUserAuthProvider.class);
   private static final List<GrantedAuthority> USER_ROLES = AuthorityUtils
       .createAuthorityList("ROLE_USER");
 
@@ -44,7 +44,7 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
   private final UserDataFactory userDataFactory;
 
   @Autowired
-  ProvysExtUserAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
+  ExtUserAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
       @Value("${provysdb.user}") String provysDbUser,
       @Value("${provysdb.pwd}") String provysDbPwd,
       @Value("${provysauth.cacheTimeout:900}") long cacheTimeoutSec,
@@ -65,7 +65,7 @@ public class ProvysExtUserAuthProvider extends ProvysUsernamePasswordAuthProvide
   /**
    * Variant with supplied data source, used for testing.
    */
-  ProvysExtUserAuthProvider(String provysDbUrl, String provysDbUser, String provysDbPwd,
+  ExtUserAuthProvider(String provysDbUrl, String provysDbUser, String provysDbPwd,
       DataSource dataSource, long cacheTimeoutSec, UserDataFactory userDataFactory) {
     super(cacheTimeoutSec);
     this.provysDbUrl = "jdbc:oracle:thin:@" + Objects.requireNonNull(provysDbUrl);

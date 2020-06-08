@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Configuration;
 public class MockAuthProviderFactory {
 
   @Bean
-  ProvysMockAuthProvider provysMockAuthProvider() {
-    return new ProvysMockAuthProvider(
+  MockAuthProvider provysMockAuthProvider() {
+    return new MockAuthProvider(
         Map.of(new UsernamePasswordPair("user", "pwd"),
             ProvysUserData.of(DtUid.valueOf("1"), "USER", "User",
                 DtEncryptedString.valueOf("TOKEN"))));

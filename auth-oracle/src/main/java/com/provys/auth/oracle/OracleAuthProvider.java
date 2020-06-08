@@ -25,9 +25,9 @@ import org.springframework.stereotype.Component;
  * authentication using the same credentials.
  */
 @Component
-public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider {
+public class OracleAuthProvider extends ProvysUsernamePasswordAuthProvider {
 
-  private static final Logger LOG = LogManager.getLogger(ProvysOracleAuthProvider.class);
+  private static final Logger LOG = LogManager.getLogger(OracleAuthProvider.class);
   private static final List<GrantedAuthority> USER_ROLES = AuthorityUtils
       .createAuthorityList("ROLE_USER");
 
@@ -36,7 +36,7 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
   private final UserDataFactory userDataFactory;
 
   @Autowired
-  ProvysOracleAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
+  OracleAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
       @Value("${provysauth.cacheTimeout:900}") long cacheTimeoutSec,
       UserDataFactory userDataFactory) {
     super(cacheTimeoutSec);
@@ -50,7 +50,7 @@ public class ProvysOracleAuthProvider extends ProvysUsernamePasswordAuthProvider
     this.userDataFactory = Objects.requireNonNull(userDataFactory);
   }
 
-  ProvysOracleAuthProvider(String provysDbUrl, DataSource dataSource, long cacheTimeoutSec,
+  OracleAuthProvider(String provysDbUrl, DataSource dataSource, long cacheTimeoutSec,
       UserDataFactory userDataFactory) {
     super(cacheTimeoutSec);
     this.provysDbUrl = "jdbc:oracle:thin:@" + Objects.requireNonNull(provysDbUrl);

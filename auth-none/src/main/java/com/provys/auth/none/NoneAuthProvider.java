@@ -30,9 +30,9 @@ import org.springframework.stereotype.Component;
  * generic connection is used.
  */
 @Component
-public class ProvysNoneAuthProvider implements AuthenticationProvider {
+public class NoneAuthProvider implements AuthenticationProvider {
 
-  private static final Logger LOG = LogManager.getLogger(ProvysNoneAuthProvider.class);
+  private static final Logger LOG = LogManager.getLogger(NoneAuthProvider.class);
   private static final List<GrantedAuthority> USER_ROLES = AuthorityUtils
       .createAuthorityList("ROLE_USER");
 
@@ -94,7 +94,7 @@ public class ProvysNoneAuthProvider implements AuthenticationProvider {
   private volatile @MonotonicNonNull Authentication authenticationResult;
 
   @Autowired
-  ProvysNoneAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
+  NoneAuthProvider(@Value("${provysdb.url}") String provysDbUrl,
       @Value("${provysdb.user}") String provysDbUser,
       @Value("${provysdb.pwd}") String provysDbPwd, UserDataFactory userDataFactory) {
     this.provysDbUrl = "jdbc:oracle:thin:@" + Objects.requireNonNull(provysDbUrl);

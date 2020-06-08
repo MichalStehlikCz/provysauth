@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 
-class ProvysExtUserAuthProviderTest {
+class ExtUserAuthProviderTest {
 
   @Test
   void authenticateTest() throws SQLException {
@@ -22,7 +22,7 @@ class ProvysExtUserAuthProviderTest {
     var pwd = "pwd";
     var dataSource = mock(DataSource.class);
     var userDataFactory = mock(UserDataFactory.class);
-    var authProvider = new ProvysExtUserAuthProvider("url", user, pwd, dataSource,
+    var authProvider = new ExtUserAuthProvider("url", user, pwd, dataSource,
         100, userDataFactory);
     var connection = mock(Connection.class);
     when(dataSource.getConnection(user, pwd)).thenReturn(connection);

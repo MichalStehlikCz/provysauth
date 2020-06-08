@@ -21,6 +21,6 @@ public class AuthProviderLookupTest {
   @Test
   void getAuthProviderTest() {
     assertThat(authProviderLookup.getAuthProvider("ORACLE"))
-        .isInstanceOf(ProvysOracleAuthProvider.class);
+        .isInstanceOf(OracleAuthProvider.class);
   }
 }

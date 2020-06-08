@@ -6,10 +6,10 @@ package com.provys.auth.api;
  */
 enum AuthProviders {
 
-  ORACLE("provysOracleAuthProvider"),
-  EXTUSER("provysExtUserAuthProvider"),
-  NONE("provysNoneAuthProvider"),
-  MOCK("provysMockAuthProvider");
+  ORACLE("oracleAuthProvider"),
+  EXTUSER("extUserAuthProvider"),
+  NONE("noneAuthProvider"),
+  MOCK("mockAuthProvider");
 
   private final String beanName;
 
