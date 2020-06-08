@@ -2,6 +2,7 @@ package com.provys.auth.none;
 
 import com.provys.common.exception.InternalException;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.authority.AuthorityUtils;
 
 /**
  * Authentication token, carrying no information about principal nor rights. Enables to call
@@ -23,7 +24,7 @@ public final class NoneAuthenticationToken extends AbstractAuthenticationToken {
   }
 
   private NoneAuthenticationToken() {
-    super(null);
+    super(AuthorityUtils.NO_AUTHORITIES);
   }
 
   @Override
