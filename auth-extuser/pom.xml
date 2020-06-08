@@ -4,7 +4,7 @@
   <parent>
     <artifactId>auth-parent</artifactId>
     <groupId>com.provys.auth</groupId>
-    <version>3.0.1</version>
+    <version>3.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>auth-extuser</artifactId>
   <dependencies>
