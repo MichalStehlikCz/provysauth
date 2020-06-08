@@ -140,6 +140,7 @@ public class NoneAuthProvider implements AuthenticationProvider {
               statement.getString(2),
               statement.getString(3),
               DtEncryptedString.valueOf("GENERIC")));
+          authenticationResult.setAuthenticated(true);
           LOG.debug("Initialized authentication result of none auth provider using db {}, user {}",
               provysDbUrl, provysDbUser);
         } catch (SQLException e) {
